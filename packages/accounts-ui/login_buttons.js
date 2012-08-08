@@ -9,6 +9,7 @@
   var ERROR_MESSAGE_KEY = 'Meteor.loginButtons.errorMessage';
   var INFO_MESSAGE_KEY = 'Meteor.loginButtons.infoMessage';
   var RESET_PASSWORD_TOKEN_KEY = 'Meteor.loginButtons.resetPasswordToken';
+  var JUST_VALIDATED_USER_KEY = 'Meteor.loginButtons.justValidatedUser';
 
   var resetSession = function () {
     Session.set(IN_SIGNUP_FLOW_KEY, false);
@@ -264,6 +265,31 @@
 
 
   //
+  // justValidatedUserForm template
+  //
+
+  Template.justValidatedUserForm.events = {
+    'click #just-validated-dismiss-button': function () {
+      Session.set(JUST_VALIDATED_USER_KEY, false);
+    }
+  };
+
+  Template.justValidatedUserForm.visible = function () {
+    return Session.get(JUST_VALIDATED_USER_KEY);
+  };
+
+  Meteor.startup(function () {
+    if (Meteor.accounts._validateEmailToken) {
+      Meteor.validateEmail(Meteor.accounts._validateEmailToken, function(error) {
+        Meteor.accounts._preventAutoLogin = false;
+        if (!error)
+          Session.set(JUST_VALIDATED_USER_KEY, true);
+        // XXX show something if there was an error.
+      });
+    }
+  });
+
+  //
   // helpers
   //
 
@@ -295,7 +321,7 @@
       return;
     }
 
-    Meteor.createUser({username: username, password: password}, function (error) {
+    Meteor.createUser({username: username, password: password, validation: true}, function (error) {
       if (error) {
         Session.set(ERROR_MESSAGE_KEY, error.reason);
       }
